@@ -1,94 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DOGE Live Profit Calculator</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Crypto Live Calculator + 7-day Predictor</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+  :root {
+    --bg: #0b1220;
+    --card: #1c2733;
+    --accent: #06b6d4;
+    --muted: #94a3b8;
+    --accent-hover: #0fbde4;
+    --shadow: rgba(0, 0, 0, 0.5);
+  }
+  * { box-sizing: border-box; }
   body {
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
+    font-family: 'Inter', system-ui, Arial, sans-serif;
+    background: var(--bg);
+    color: #e6eef8;
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+  }
+  .card {
+    width: 780px;
+    max-width: 100%;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 8px 20px var(--shadow);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  h1 {
+    margin: 0 0 20px;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
     text-align: center;
-    padding: 20px;
   }
-  .box {
-    background: #1d1d1d;
-    padding: 20px;
+  label {
+    display: block;
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 12px;
+    font-weight: 500;
+  }
+  select, input {
+    width: 100%;
+    padding: 12px;
     border-radius: 12px;
-    width: 350px;
-    margin: auto;
-    box-shadow: 0 0 10px #000;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.05);
+    color: inherit;
+    margin-top: 6px;
+    transition: border 0.3s, background 0.3s;
   }
-  input {
-    width: 90%;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 8px;
-    border: none;
+  select:hover, input:hover {
+    border-color: var(--accent);
+    background: rgba(255,255,255,0.08);
   }
+  .row { display: flex; gap: 16px; margin-top: 16px; }
+  .col { flex: 1; }
   button {
-    padding: 10px 20px;
-    background: #0f9d58;
+    padding: 12px 18px;
+    border-radius: 12px;
     border: none;
-    color: white;
-    border-radius: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    font-weight: 600;
+    transition: background 0.3s;
   }
-  #livePrice {
-    font-size: 22px;
-    font-weight: bold;
-    color: #00e676;
+  button#calcBtn {
+    background: var(--accent);
+    color: #022;
   }
+  button#calcBtn:hover {
+    background: var(--accent-hover);
+  }
+  button#startAuto, button#stopAuto {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--accent);
+  }
+  button#startAuto:hover, button#stopAuto:hover {
+    border-color: var(--accent-hover);
+    color: var(--accent-hover);
+  }
+  #result {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .muted { color: var(--muted); font-size: 13px; }
+  .small { font-size: 13px; }
 </style>
 </head>
 <body>
-<h2>🐕 DOGE Live Calculator</h2>
-<div class="box">
-  <p>Live Price (INR): <span id="livePrice">Loading...</span></p>
+<div class="card">
+  <h1>🔥 Crypto Live Calculator + 7-day Predictor</h1>
 
-  <input type="number" id="invest" placeholder="Enter amount (INR)" />
-  <input type="number" id="sellPrice" placeholder="Sell Price (INR)" />
+  <label>Coin</label>
+  <select id="coin">
+    <option value="dogecoin">Dogecoin (DOGE)</option>
+    <option value="bitcoin">Bitcoin (BTC)</option>
+    <option value="ethereum">Ethereum (ETH)</option>
+    <option value="tether">Tether (USDT)</option>
+  </select>
 
-  <button onclick="calculate()">Calculate Profit</button>
+  <div class="row">
+    <div class="col">
+      <label>Investment (INR)</label>
+      <input id="invest" type="number" placeholder="e.g. 10000" />
+    </div>
+    <div class="col">
+      <label>Buy Price (INR) — optional</label>
+      <input id="buyPrice" type="number" placeholder="if empty, uses live price" />
+    </div>
+  </div>
 
-  <h3 id="result"></h3>
+  <label>Target / Sell Price (INR) — optional</label>
+  <input id="sellPrice" type="number" placeholder="used for manual profit calc" />
+
+  <div class="row">
+    <div class="col">
+      <label>Prediction Horizon</label>
+      <select id="horizon">
+        <option value="3600">1 hour</option>
+        <option value="86400" selected>24 hours</option>
+        <option value="604800">7 days</option>
+      </select>
+    </div>
+    <div style="width:180px">
+      <label>Auto-refresh interval</label>
+      <select id="interval">
+        <option value="10000" selected>10 sec</option>
+        <option value="5000">5 sec</option>
+        <option value="30000">30 sec</option>
+        <option value="60000">1 min</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:20px">
+    <button id="calcBtn">Calculate / Predict</button>
+    <button id="startAuto">Start Auto-Refresh</button>
+    <button id="stopAuto">Stop Auto-Refresh</button>
+  </div>
+
+  <div id="result">
+    <div class="small muted">Live Price: <span id="livePrice">—</span></div>
+    <div id="summary" style="margin-top:12px"></div>
+    <div id="prediction" style="margin-top:12px"></div>
+  </div>
+
+  <p class="muted small" style="margin-top:14px">Prediction: local math model using 7-day market data (no external AI). Not financial advice.</p>
 </div>
 
 <script>
-async function fetchLivePrice() {
-  try {
-    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=dogecoin&vs_currencies=inr");
-    const data = await res.json();
-    let price = data.dogecoin.inr;
-    document.getElementById("livePrice").innerText = price;
-    return price;
-  } catch (e) {
-    document.getElementById("livePrice").innerText = "Error";
-    return 14; // fallback
-  }
-}
-
-async function calculate() {
-  let invest = document.getElementById("invest").value;
-  let sell = document.getElementById("sellPrice").value;
-  let live = await fetchLivePrice();
-
-  if (!invest || !sell) {
-    document.getElementById("result").innerText = "Enter values";
-    return;
-  }
-
-  let qty = invest / live;
-  let finalValue = qty * sell;
-  let profit = finalValue - invest;
-
-  document.getElementById("result").innerHTML = `Quantity: ${qty.toFixed(2)} DOGE<br>Final Value: ₹${finalValue.toFixed(2)}<br>Profit: ₹${profit.toFixed(2)}`;
-}
-
-fetchLivePrice();
-setInterval(fetchLivePrice, 10000);
+let autoTimer = null;
+const MAX_LOCAL_HISTORY = 200;
+let localHistory = [];
+function formatINR(n){ return '₹'+Number(n).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+async function fetchLivePrice(coin){try{const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin}&vs_currencies=inr`);if(!r.ok)return null;const j=await r.json();return (j[coin]&&typeof j[coin].inr==='number')?j[coin].inr:null;}catch(e){return null;}}
+async function fetchMarketChart(coin,days=7){try{const r=await fetch(`https://api.coingecko.com/api/v3/coins/${coin}/market_chart?vs_currency=inr&days=${days}&interval=hourly`);if(!r.ok)return null;const j=await r.json();return (j&&Array.isArray(j.prices))?j.prices:null;}catch(e){return null;}}
+function weightedLinearRegression(xs,ys,weights){let sw=0,sx=0,sy=0,sxy=0,sxx=0;for(let i=0;i<xs.length;i++){const w=weights?weights[i]:1;sw+=w;sx+=w*xs[i];sy+=w*ys[i];sxy+=w*xs[i]*ys[i];sxx+=w*xs[i]*xs[i];}const denom=sw*sxx-sx*sx;if(Math.abs(denom)<1e-12)return {a:0,b:0};const b=(sw*sxy-sx*sy)/denom;const a=(sy-b*sx)/sw;return {a,b};}
+function predictPriceFromSeries(prices,futureSeconds){if(!prices)return null;const arr=prices.map(p=>Array.isArray(p)?p:[p.t,p.price]).filter(x=>x[1]>0);if(arr.length<4)return null;const pts=arr.slice(-168);const now=Date.now();const t0=pts[0][0];const xs=[],ys=[],weights=[];for(let i=0;i<pts.length;i++){const ts=pts[i][0],price=pts[i][1];xs.push((ts-t0)/1000);ys.push(Math.log(price));const age=(now-ts)/1000;weights.push(Math.exp(-age/(3600*24)));}if(xs.length<4)return null;const lr=weightedLinearRegression(xs,ys,weights);const futureX=(now+futureSeconds*1000-t0)/1000;const predLog=lr.a+lr.b*futureX;const predPrice=Math.exp(predLog);let mean=0,sse=0,sst=0;for(let v of ys)mean+=v;mean/=ys.length;for(let i=0;i<ys.length;i++){const yhat=lr.a+lr.b*xs[i];sse+=Math.pow(ys[i]-yhat,2);sst+=Math.pow(ys[i]-mean,2);}const r2=1-(sse/(sst+1e-12));return {predPrice,r2};}
+async function runAll(){const coin=document.getElementById('coin').value;const invest=Number(document.getElementById('invest').value)||0;const buyInput=Number(document.getElementById('buyPrice').value)||0;const sellInput=Number(document.getElementById('sellPrice').value)||0;const horizon=Number(document.getElementById('horizon').value);const live=await fetchLivePrice(coin);document.getElementById('livePrice').innerText=live?formatINR(live):'—';if(live){localHistory.push({t:Date.now(),price:live});if(localHistory.length>MAX_LOCAL_HISTORY)localHistory.shift();}const buyPrice=buyInput>0?buyInput:(live||0);const qty=buyPrice>0?invest/buyPrice:0;const currentValue=qty*(live||0);const manualSellValue=sellInput>0?qty*sellInput:null;const manualProfit=manualSellValue?manualSellValue-invest:null;let prices=await fetchMarketChart(coin,7);if(!prices||prices.length<4){prices=localHistory.map(h=>[h.t,h.price]);}const pred=prices.length>=4?predictPriceFromSeries(prices,horizon):null;const summaryEl=document.getElementById('summary');let out='';out+=`<b>Investment:</b> ${invest>0?formatINR(invest):'—'}<br>`;out+=`<b>Buy Price used:</b> ${buyPrice>0?formatINR(buyPrice):'—'}<br>`;out+=`<b>Coins:</b> ${qty?qty.toFixed(6):'—'}<br>`;out+=`<b>Current Value:</b> ${currentValue?formatINR(currentValue):'—'}<br>`;if(manualSellValue){out+=`<b>Value at sell price:</b> ${formatINR(manualSellValue)}<br><b>Profit at sell price:</b> ${formatINR(manualProfit)}<br>`;}summaryEl.innerHTML=out;const predEl=document.getElementById('prediction');if(pred){const predicted=pred.predPrice;const r2=pred.r2;const predictedValue=qty*predicted;const predictedProfit=predictedValue-invest;predEl.innerHTML=`<b>Prediction (${document.getElementById('horizon').selectedOptions[0].text}):</b> ${formatINR(predicted)}<br><b>Predicted Value:</b> ${formatINR(predictedValue)}<br><b>Predicted Profit:</b> ${formatINR(predictedProfit)}<br><span class="muted small">Model R² ≈ ${r2.toFixed(3)}</span>`;}else{predEl.innerHTML=`<span class="muted">Prediction not available</span>`;}}
+function startAuto(){stopAuto();autoTimer=setInterval(runAll,10000);document.getElementById('startAuto').innerText='Auto-Refresh: ON';}
+function stopAuto(){if(autoTimer)clearInterval(autoTimer);autoTimer=null;document.getElementById('startAuto').innerText='Start Auto-Refresh';}
+document.getElementById('calcBtn').addEventListener('click',runAll);
+document.getElementById('startAuto').addEventListener('click',startAuto);
+document.getElementById('stopAuto').addEventListener('click',stopAuto);
+window.addEventListener('DOMContentLoaded',()=>{startAuto();});
 </script>
 </body>
 </html>
